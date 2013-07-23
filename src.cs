@@ -8,7 +8,7 @@ using SteamKit2;
 using ProtoBuf;
 using SteamKit2.Internal;
 using System.Net;
-namespace TF2Idler
+namespace STCF
 {
     /// <summary>
     /// Program
@@ -20,7 +20,7 @@ namespace TF2Idler
 
         static SteamUser steamUser;
         static SteamFriends steamFriends;
-
+        static string logo = "..####...######...####...........######...####...#####...##...##..######..#####..\n.##........##....##..##..........##......##..##..##..##..###.###..##......##..##.\n..####.....##....##..............####....######..#####...##.#.##..####....#####..\n.....##....##....##..##..........##......##..##..##..##..##...##..##......##..##.\n..####.....##.....####...........##......##..##..##..##..##...##..######..##..##.\n";
         static bool isRunning;
 
         static string user, pass;
@@ -28,8 +28,7 @@ namespace TF2Idler
         static void Main(string[] args)
         {
             AppLocalization.SetLang();
-            Console.WriteLine("[DEV]CURRENT LANG:"+EasimerNet.GetOSLang());
-            Console.Write("..####...######...####...........######...####...#####...##...##..######..#####..\n.##........##....##..##..........##......##..##..##..##..###.###..##......##..##.\n..####.....##....##..............####....######..#####...##.#.##..####....#####..\n.....##....##....##..##..........##......##..##..##..##..##...##..##......##..##.\n..####.....##.....####...........##......##..##..##..##..##...##..######..##..##.\n");
+            Console.Write(logo);
             if (!EasimerNet.CheckForInternetConnection())
             {
                 EasimerNet.WriteError(AppLocalization.noNetConn);
@@ -38,39 +37,23 @@ namespace TF2Idler
             user = Console.ReadLine();
             Console.WriteLine(AppLocalization.enterPass);
             pass = Console.ReadLine();
-            // create our steamclient instance
             steamClient = new SteamClient();
-            // create the callback manager which will route callbacks to function calls
             manager = new CallbackManager(steamClient);
-
-            // get the steamuser handler, which is used for logging on after successfully connecting
             steamUser = steamClient.GetHandler<SteamUser>();
-            // get the steam friends handler, which is used for interacting with friends on the network after logging on
             steamFriends = steamClient.GetHandler<SteamFriends>();
-
-            // register a few callbacks we're interested in
-            // these are registered upon creation to a callback manager, which will then route the callbacks
-            // to the functions specified
             new Callback<SteamClient.ConnectedCallback>(OnConnected, manager);
             new Callback<SteamClient.DisconnectedCallback>(OnDisconnected, manager);
-
             new Callback<SteamUser.LoggedOnCallback>(OnLoggedOn, manager);
             new Callback<SteamUser.LoggedOffCallback>(OnLoggedOff, manager);
-
-            // this callback is triggered when the steam servers wish for the client to store the sentry file
             new JobCallback<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth, manager);
 
             isRunning = true;
 
             EasimerNet.WriteInfo(AppLocalization.conn2Steam);
-
-            // initiate the connection
             steamClient.Connect();
             steamFriends.SetPersonaState(EPersonaState.Online);
-            // create our callback handling loop
             while (isRunning)
             {
-                // in order for the callbacks to get routed, they need to be handled by the manager
                 manager.RunWaitCallbacks(TimeSpan.FromSeconds(1));
             }
             
@@ -90,7 +73,6 @@ namespace TF2Idler
             byte[] sentryHash = null;
             if (File.Exists("sentry.bin"))
             {
-                // if we have a saved sentry file, read and sha-1 hash it
                 byte[] sentryFile = File.ReadAllBytes("sentry.bin");
                 sentryHash = CryptoHelper.SHAHash(sentryFile);
             }
@@ -99,22 +81,13 @@ namespace TF2Idler
             {
                 Username = user,
                 Password = pass,
-
-                // in this sample, we pass in an additional authcode
-                // this value will be null (which is the default) for our first logon attempt
                 AuthCode = authCode,
-
-                // our subsequent logons use the hash of the sentry file as proof of ownership of the file
-                // this will also be null for our first (no authcode) and second (authcode only) logon attempts
                 SentryFileHash = sentryHash,
             });
         }
 
         static void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
-            // after recieving an AccountLogonDenied, we'll be disconnected from steam
-            // so after we read an authcode from the user, we need to reconnect to begin the logon flow again
-
             EasimerNet.WriteWarning(AppLocalization.reConn);
 
             Thread.Sleep(TimeSpan.FromSeconds(5));
@@ -154,16 +127,8 @@ namespace TF2Idler
         static void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback, JobID jobId)
         {
             EasimerNet.WriteInfo(AppLocalization.sentry);
-
             byte[] sentryHash = CryptoHelper.SHAHash(callback.Data);
-
-            // write out our sentry file
-            // ideally we'd want to write to the filename specified in the callback
-            // but then this sample would require more code to find the correct sentry file to read during logon
-            // for the sake of simplicity, we'll just use "sentry.bin"
             File.WriteAllBytes("sentry.bin", callback.Data);
-
-            // inform the steam servers that we're accepting this sentry file
             steamUser.SendMachineAuthResponse(new SteamUser.MachineAuthDetails
             {
                 JobID = jobId,
@@ -299,13 +264,6 @@ namespace TF2Idler
             Console.WriteLine(AppLocalization.info + text);
             Console.BackgroundColor = ConsoleColor.Black;
         }
-        /// <summary>
-        /// Beep Boop
-        /// </summary>
-        public static void Beep()
-        {
-            Console.Beep();
-        }
         public static string GetOSLang()
         {
             string lang = System.Globalization.CultureInfo.CurrentCulture.ToString();
@@ -315,56 +273,12 @@ namespace TF2Idler
     class AppLocalization
     {
         //fuck the static
-        public static string noNetConn;
-        public static string enterUser;
-        public static string enterPass;
-        public static string conn2Steam;
-        public static string unable2Conn;
-        public static string connLog;
-        public static string reConn;
-        public static string steamGuard;
-        public static string enterKey;
-        public static string unable2Log;
-        public static string successLog;
-        public static string logOff;
-        public static string sentry;
-        public static string done;
-        public static string enterAppID;
-        public static string isOnline;
-        public static string check4Net;
-        public static string error, info, warning;
-        public static string beepBoop;
-        public static string invalidCmd;
+        public static string noNetConn,enterUser,enterPass,conn2Steam,unable2Conn,connLog,reConn,steamGuard,enterKey,unable2Log,successLog,logOff,sentry,done,enterAppID,isOnline,check4Net,error, info, warning,beepBoop,invalidCmd;
         public static void SetLang()
         {
         string curlang = EasimerNet.GetOSLang();
 
-        if (curlang.Contains("en")) //en-US
-        {
-            noNetConn = "No internet connection!";
-            enterUser = "Enter username:";
-            enterPass = "Enter password:";
-            conn2Steam = "Connecting to Steam...";
-            unable2Conn = "Unable to connect to Steam: {0}";
-            connLog = "Connected to Steam! Logging in '{0}'...";
-            reConn = "Disconnected from Steam, reconnecting in 5...";
-            steamGuard = "This account is SteamGuard protected!";
-            enterKey = "Please enter the auth code sent to the email at {0}: ";
-            unable2Log = "Unable to logon to Steam: {0} / {1}";
-            successLog = "Successfully logged on!";
-            logOff = "Logged off of Steam: {0}";
-            sentry = "Updating sentryfile...";
-            done = "Done.";
-            enterAppID = "Enter a game appid (ex.: 420 = TF2, 730 = CS:GO)";
-            isOnline = " is now Online!";
-            check4Net = "Checking for internet connection...";
-            error = "[ERROR] ";
-            warning = "[WARNING] ";
-            info = "[INFO] ";
-            invalidCmd = "Invalid command";
-            beepBoop = "Beep Boop Shutting Down...";
-        }
-        else if (curlang.Contains("hu")) //hungarian
+        if (curlang.Contains("hu")) //hungarian
         {
             noNetConn = "Nincs internet-kapcsolat!";
             enterUser = "Felhasználónév:";
@@ -414,7 +328,7 @@ namespace TF2Idler
             invalidCmd = "Commande invalide";
             beepBoop = "Beep Boop Arrêt...";
         }
-        else //the default is english
+        else //default (english)
         {
             noNetConn = "No internet connection!";
             enterUser = "Enter username:";
