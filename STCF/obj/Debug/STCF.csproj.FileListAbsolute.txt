@@ -1,0 +1,11 @@
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\STCF.exe.config
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\STCF.exe
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\STCF.pdb
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\protobuf-net.dll
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\SteamKit2.dll
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\protobuf-net.pdb
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\protobuf-net.xml
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\bin\Debug\SteamKit2.xml
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\obj\Debug\STCF.csprojResolveAssemblyReference.cache
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\obj\Debug\STCF.exe
+C:\Users\Easimer\Documents\Visual Studio 2012\Projects\TF2Idler\STCF\obj\Debug\STCF.pdb
