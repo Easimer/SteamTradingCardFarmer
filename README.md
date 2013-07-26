@@ -1,6 +1,6 @@
 Steam Trading Card Farmer
 ======================
-Requires min. Visual Studio 2010. SteamKit2 and protobuf-net included.
+Requires Visual Studio 2012 or older. SteamKit2 and protobuf-net included.
 
 Using
 ======================
