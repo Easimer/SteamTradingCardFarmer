@@ -1,17 +1,8 @@
-/// Author: Easimer
-/// Date: 2013. 07. 23.
-/// Stage: Alpha
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-using System.Threading;
 using System.Net;
 using SteamKit2;
 using SteamKit2.Internal;
-using ProtoBuf;
-
 
 namespace STCF
 {
@@ -19,24 +10,21 @@ namespace STCF
     {
         static SteamClient steamClient;
         static CallbackManager manager;
-
         static SteamUser steamUser;
         static SteamFriends steamFriends;
-        static string logo = "..####...######...####...........######...####...#####...##...##..######..#####..\n.##........##....##..##..........##......##..##..##..##..###.###..##......##..##.\n..####.....##....##..............####....######..#####...##.#.##..####....#####..\n.....##....##....##..##..........##......##..##..##..##..##...##..##......##..##.\n..####.....##.....####...........##......##..##..##..##..##...##..######..##..##.\n"; //lel
         static bool isRunning;
-
         static string user, pass;
         static string authCode;
         static void Main(string[] args)
         {
-            Console.Write(logo);
-            if (!EasimerNet.CheckForInternetConnection())
+            Console.WriteLine("Steam Trading Card Farmer\n");
+            if (!STCFNet.CheckForInternetConnection())
             {
-                EasimerNet.WriteError("No internet connection!");
+                STCFNet.WriteError("No internet connection!");
             }
-            Console.WriteLine("Enter username:");
+            Console.WriteLine("Username:");
             user = Console.ReadLine();
-            Console.WriteLine("Enter password:");
+            Console.WriteLine("Password:");
             pass = Console.ReadLine();
             steamClient = new SteamClient();
             manager = new CallbackManager(steamClient);
@@ -47,37 +35,31 @@ namespace STCF
             new Callback<SteamUser.LoggedOnCallback>(OnLoggedOn, manager);
             new Callback<SteamUser.LoggedOffCallback>(OnLoggedOff, manager);
             new JobCallback<SteamUser.UpdateMachineAuthCallback>(OnMachineAuth, manager);
-
             isRunning = true;
-
-            EasimerNet.WriteInfo("Connecting to Steam...");
+            STCFNet.WriteInfo("Connecting to Steam...");
             steamClient.Connect();
             steamFriends.SetPersonaState(EPersonaState.Online);
             while (isRunning)
             {
                 manager.RunWaitCallbacks(TimeSpan.FromSeconds(1));
             }
-
         }
+
         static void OnConnected(SteamClient.ConnectedCallback callback)
         {
             if (callback.Result != EResult.OK)
             {
                 Console.WriteLine("Unable to connect: {0}", callback.Result);
-
                 isRunning = false;
                 return;
             }
-
             Console.WriteLine("Connected to Steam! Logging in '{0}'...", user);
-
             byte[] sentryHash = null;
             if (File.Exists("sentry.bin"))
             {
                 byte[] sentryFile = File.ReadAllBytes("sentry.bin");
                 sentryHash = CryptoHelper.SHAHash(sentryFile);
             }
-
             steamUser.LogOn(new SteamUser.LogOnDetails
             {
                 Username = user,
@@ -89,10 +71,8 @@ namespace STCF
 
         static void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
-            EasimerNet.WriteWarning("Disconnected. Reconnecting in 5...");
-
-            Thread.Sleep(TimeSpan.FromSeconds(5));
-
+            STCFNet.WriteWarning("Disconnected. Reconnecting now...");
+            
             steamClient.Connect();
         }
 
@@ -100,23 +80,18 @@ namespace STCF
         {
             if (callback.Result == EResult.AccountLogonDenied)
             {
-                EasimerNet.WriteInfo("This account is protected by SteamGuard...");
+                STCFNet.WriteInfo("This account is protected by SteamGuard...");
                 Console.Write("Please enter the key sent to {0}: ", callback.EmailDomain);
-
                 authCode = Console.ReadLine();
                 return;
             }
-
             if (callback.Result != EResult.OK)
             {
                 Console.WriteLine("Unable to log in: {0} {1}", callback.Result, callback.ExtendedResult);
-
                 isRunning = false;
                 return;
             }
-
-            EasimerNet.WriteInfo("Successfully logged on!");
-
+            STCFNet.WriteInfo("Successfully logged on!");
             GetCMD();
         }
 
@@ -127,28 +102,22 @@ namespace STCF
 
         static void OnMachineAuth(SteamUser.UpdateMachineAuthCallback callback, JobID jobId)
         {
-            EasimerNet.WriteInfo("Updating sentryfile...");
+            STCFNet.WriteInfo("Updating sentryfile...");
             byte[] sentryHash = CryptoHelper.SHAHash(callback.Data);
             File.WriteAllBytes("sentry.bin", callback.Data);
             steamUser.SendMachineAuthResponse(new SteamUser.MachineAuthDetails
             {
                 JobID = jobId,
-
                 FileName = callback.FileName,
-
                 BytesWritten = callback.BytesToWrite,
                 FileSize = callback.Data.Length,
                 Offset = callback.Offset,
-
                 Result = EResult.OK,
                 LastError = 0,
-
                 OneTimePassword = callback.OneTimePassword,
-
                 SentryFileHash = sentryHash,
             });
-
-            EasimerNet.WriteInfo("Done.");
+            STCFNet.WriteInfo("Done.");
         }
         public static void LaunchGame(ulong appid)
         {
@@ -173,16 +142,16 @@ namespace STCF
                 GetCMD();
                 return 1;
             }
-    		else if (tempcmd == "ExitGame()")
-			{
-			LaunchGame(0);
-			GetCMD();
-			return 1;
-			}
+            else if (tempcmd == "ExitGame()")
+            {
+                LaunchGame(0);
+                GetCMD();
+                return 1;
+            }
             else if (tempcmd == "GoOnline()")
             {
                 string profileName = steamFriends.GetPersonaName();
-                EasimerNet.WriteInfo(profileName + " is now Online!");
+                STCFNet.WriteInfo(profileName + " is now Online!");
                 GoOnline();
                 GetCMD();
                 return 1;
@@ -195,15 +164,14 @@ namespace STCF
             }
             else
             {
-                EasimerNet.WriteError("Invalid command");
+                STCFNet.WriteError("Invalid command");
                 GetCMD();
                 return 0;
             }
-
         }
     }
 
-    class EasimerNet
+    class STCFNet
     {
         public static bool CheckForInternetConnection(string url = null)
         {
@@ -242,11 +210,6 @@ namespace STCF
             Console.BackgroundColor = ConsoleColor.Blue;
             Console.WriteLine("[INFO] " + text);
             Console.BackgroundColor = ConsoleColor.Black;
-        }
-        public static string GetOSLang()
-        {
-            string lang = System.Globalization.CultureInfo.CurrentCulture.ToString();
-            return lang;
         }
     }
 }
